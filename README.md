@@ -14,3 +14,23 @@ The local environment consists of three chains:
 </p>
 
 ### Getting started
+
+To run the local environment, we will first need to get all the necessary binaries. 
+
+If we only want to test functionality that is not related to any of the contracts, we can simply run the minimal_network.toml zombienet script:
+
+```
+# This will only run the Rococo relay chain and the Coretime chain
+./scripts/minimal_init.sh
+
+./zombienet-linux -p native spawn ./zombienet/minimal_network.toml
+```
+
+In case we want to run the full local network, which will allow us to test the contracts as well, the following commands need to be run instead:
+
+```
+# This will only run the Rococo relay chain and the Coretime chain
+./scripts/full_init.sh
+
+./zombienet-linux -p native spawn ./zombienet/full_network.toml
+```
