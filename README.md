@@ -33,7 +33,7 @@ cd chopsticks
 npm i
 
 # This will add some mock data to the Coretime chain
-npx ts-node init.ts
+npm run init
 ```
 
 ### Getting started with Zombienet (WIP)
