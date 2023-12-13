@@ -11,10 +11,10 @@ async function init() {
     const coretimeApi = await ApiPromise.create({provider: coretimeWsProvider});
     const rococoApi = await ApiPromise.create({provider: rococoWsProvider});
 
-    startBulkSale(rococoApi, coretimeApi);
+    await startBulkSale(rococoApi, coretimeApi);
 }
 
-init();
+init().then(() => process.exit(0));
 
 async function startBulkSale(rococoApi: ApiPromise, coretimeApi: ApiPromise) {
     const latestRcBlock = (await rococoApi.rpc.chain.getHeader()).number.toNumber()
@@ -24,8 +24,6 @@ async function startBulkSale(rococoApi: ApiPromise, coretimeApi: ApiPromise) {
 
 async function setStatus(coretimeApi: ApiPromise, latestRcBlock: number) {
     const commitTimeslice = getLatestTimesliceReadyToCommit(latestRcBlock);
-
-    console.log(commitTimeslice);
 
     const status = {
         core_count: consts.CORE_COUNT,
