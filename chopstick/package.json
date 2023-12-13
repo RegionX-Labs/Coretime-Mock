@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@polkadot/api": "^10.11.1",
-    "@polkadot/keyring": "^12.6.1"
+    "@polkadot/api": "^10.11.1"
   }
 }
