@@ -75,7 +75,7 @@ function mockRegion(begin: Timeslice, core: CoreIndex, mask: string, end: Timesl
 }
 
 function currentTimeslice(latestRcBlock: number) {
-    return Math.floor(latestRcBlock / consts.TIMESLICE_PERIOD);
+    return Math.floor(latestRcBlock / consts.TIMESLICE) * consts.TIMESLICE_PERIOD;
 }
 
 function getLatestTimesliceReadyToCommit(latestRcBlock: number): Timeslice {
