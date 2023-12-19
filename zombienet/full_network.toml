@@ -48,7 +48,7 @@ chain = "coretime-rococo-local"
 id = 2000
 add_to_genesis = true
 cumulus_based = true
-chain = "dev"
+chain = "shibuya-dev"
 
   [[parachains.collators]]
   name = "astar-collator01"
