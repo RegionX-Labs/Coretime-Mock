@@ -2,9 +2,8 @@
 
 if [ -d "bin" ]; then
     rm -r bin/
-else 
-    mkdir bin/
 fi
+mkdir bin/
 
 cd polkadot-sdk/
 
