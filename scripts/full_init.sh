@@ -17,9 +17,9 @@ cargo build --release
 cd ../../
 
 cp ./target/release/polkadot-parachain ../bin/
-cp ./target/release/polkadot ../bin/
-cp ./target/release/polkadot-execute-worker ../bin/
-cp ./target/release/polkadot-prepare-worker ../bin/
+cp ./target/testnet/polkadot ../bin/
+cp ./target/testnet/polkadot-execute-worker ../bin/
+cp ./target/testnet/polkadot-prepare-worker ../bin/
 
 cd ../Astar/
 cargo build --release
