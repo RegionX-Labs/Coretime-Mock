@@ -52,13 +52,13 @@ chain = "dev"
 
   [[parachains.collators]]
   name = "astar-collator01"
-  command = "./bin/astar-node"
+  command = "./bin/astar-collator"
   ws_port = 9920
   args = ["--log=xcm=trace"]
 
   [[parachains.collators]]
   name = "astar-collator02"
-  command = "./bin/astar-node"
+  command = "./bin/astar-collator"
   ws_port = 9921
   args = ["--log=xcm=trace"]
 
