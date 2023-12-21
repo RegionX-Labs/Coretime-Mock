@@ -14,24 +14,6 @@ The local environment consists of three chains:
  <img src="./docs/topology.png" />
 </p>
 
-### Getting started with Chopsticks
-
-The Coretime chain is already deployed on Rococo (🥳) so that allows us to use Chopsticks for parts of the local testing.
-
-The steps to run a Coretime chain locally and setup the mock environment:
-
-```
-npm i
-
-# This will run a parallel copy of the Coretime chain
-npm run chopsticks
-
-# In a new terminal:
-
-# This will add some mock data to the Coretime chain
-npm run chopsticks-init
-```
-
 ### Getting started with Zombienet
 
 To run the local environment, we will first need to get all the necessary binaries.
@@ -51,4 +33,22 @@ In case we want to run the full local network, which will allow us to test the c
 ./scripts/full_init.sh
 
 ./zombienet-linux -p native spawn ./zombienet/full_network.toml
+```
+
+### Getting started with Chopsticks
+
+The Coretime chain is already deployed on Rococo (🥳) so that allows us to use Chopsticks for parts of the local testing.
+
+The steps to run a Coretime chain locally and setup the mock environment:
+
+```
+npm i
+
+# This will run a parallel copy of the Coretime chain
+npm run chopsticks
+
+# In a new terminal:
+
+# This will add some mock data to the Coretime chain
+npm run chopsticks-init
 ```

@@ -113,7 +113,6 @@ async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall
   return new Promise(callTx);
 }
 
-// TODO move to a separate file
 function parachainMultiLocation(paraId: number): any {
   return {
     V3: {
