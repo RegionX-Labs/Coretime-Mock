@@ -6,8 +6,8 @@
   "scripts": {
     "chopsticks": "npx @acala-network/chopsticks@latest -c ./configs/coretime-rococo.yml",
     "zombienet": "",
-    "chopsticks-init": "npx ts-node src/chopsticks_init.ts",
-    "zombienet-init": "npx ts-node src/zombienet_init.ts"
+    "chopsticks-init": "npx ts-node src/chopsticks.init.ts",
+    "zombienet-init": "npx ts-node src/zombienet.init.ts"
   },
   "keywords": [],
   "author": "",
