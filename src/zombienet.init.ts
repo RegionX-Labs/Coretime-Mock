@@ -1,10 +1,8 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
-import { u8aToHex } from '@polkadot/util';
-import { KeyringPair } from "@polkadot/keyring/types";
+import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
-import { Timeslice } from "./types";
 import * as consts from "./consts";
-import process from 'process';
+import process from "process";
 
 const FULL_NETWORK = "fullNetwork";
 
@@ -22,8 +20,12 @@ async function init() {
 
   await cryptoWaitReady();
 
-  if(featureFlag(FULL_NETWORK)) {
-    await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
+  if (featureFlag(FULL_NETWORK)) {
+    await openHrmpChannel(
+      rococoApi,
+      CORETIME_CHAIN_PARA_ID,
+      CONTRACTS_CHAIN_PARA_ID,
+    );
   }
 
   await configureBroker(rococoApi, coretimeApi);
@@ -32,68 +34,90 @@ async function init() {
 
 init().then(() => process.exit(0));
 
-async function configureBroker(rococoApi: ApiPromise, coretimeApi: ApiPromise): Promise<void> {
+async function configureBroker(
+  rococoApi: ApiPromise,
+  coretimeApi: ApiPromise,
+): Promise<void> {
   console.log(`Setting the initial configuration for the broker pallet`);
 
-  const configCall = u8aToHex(coretimeApi.tx.broker.configure(consts.CONFIG).method.toU8a());
+  const configCall = u8aToHex(
+    coretimeApi.tx.broker.configure(consts.CONFIG).method.toU8a(),
+  );
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, configCall);
 }
 
-async function startSales(rococoApi: ApiPromise, coretimeApi: ApiPromise): Promise<void> {
+async function startSales(
+  rococoApi: ApiPromise,
+  coretimeApi: ApiPromise,
+): Promise<void> {
   console.log(`Starting the bulk sale`);
 
-  const startSaleCall = u8aToHex(coretimeApi.tx.broker.startSales(consts.INITIAL_PRICE, consts.CORE_COUNT).method.toU8a());
+  const startSaleCall = u8aToHex(
+    coretimeApi.tx.broker
+      .startSales(consts.INITIAL_PRICE, consts.CORE_COUNT)
+      .method.toU8a(),
+  );
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, startSaleCall);
 }
 
-async function openHrmpChannel(rococoApi: ApiPromise, sender: number, recipient: number): Promise<void> {
-    console.log(`Openeing HRMP channel between ${sender} - ${recipient}`);
+async function openHrmpChannel(
+  rococoApi: ApiPromise,
+  sender: number,
+  recipient: number,
+): Promise<void> {
+  console.log(`Openeing HRMP channel between ${sender} - ${recipient}`);
 
-    const newHrmpChannel = [
-      sender,
-      recipient,
-      8, // Max capacity
-      512, // Max message size
-    ];
+  const newHrmpChannel = [
+    sender,
+    recipient,
+    8, // Max capacity
+    512, // Max message size
+  ];
 
-    const alice = keyring.addFromUri("//Alice");
+  const alice = keyring.addFromUri("//Alice");
 
-    const openHrmp = rococoApi.tx.hrmp.forceOpenHrmpChannel(...newHrmpChannel);
-    const sudoCall = rococoApi.tx.sudo.sudo(openHrmp);
+  const openHrmp = rococoApi.tx.hrmp.forceOpenHrmpChannel(...newHrmpChannel);
+  const sudoCall = rococoApi.tx.sudo.sudo(openHrmp);
 
-    const callTx = async (resolve: () => void) => {
-        const unsub = await sudoCall.signAndSend(alice, (result: any) => {
-        if (result.status.isInBlock) {
-            unsub();
-            resolve();
-        }
-        });
-    };
+  const callTx = async (resolve: () => void) => {
+    const unsub = await sudoCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+        unsub();
+        resolve();
+      }
+    });
+  };
 
   return new Promise(callTx);
 }
 
-async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall: string): Promise<void> {
-  const xcmCall = api.tx.xcmPallet.send(parachainMultiLocation(destParaId), {V3: [
-    {
-      UnpaidExecution: {
-        check_origin: null,
-        weight_limit: "Unlimited"
-      }
-    },
-    {
-      Transact: {
-        originKind: "Superuser",
-        requireWeightAtMost: {
-          refTime: 5000000000,
-          proofSize: 900000,
+async function forceSendXcmCall(
+  api: ApiPromise,
+  destParaId: number,
+  encodedCall: string,
+): Promise<void> {
+  const xcmCall = api.tx.xcmPallet.send(parachainMultiLocation(destParaId), {
+    V3: [
+      {
+        UnpaidExecution: {
+          check_origin: null,
+          weight_limit: "Unlimited",
         },
-        call: {
-          encoded: encodedCall
-        }
-      }
-    }
-  ]});
+      },
+      {
+        Transact: {
+          originKind: "Superuser",
+          requireWeightAtMost: {
+            refTime: 5000000000,
+            proofSize: 900000,
+          },
+          call: {
+            encoded: encodedCall,
+          },
+        },
+      },
+    ],
+  });
 
   console.log(encodedCall);
 
@@ -102,12 +126,12 @@ async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall
   const alice = keyring.addFromUri("//Alice");
 
   const callTx = async (resolve: () => void) => {
-      const unsub = await sudoCall.signAndSend(alice, (result: any) => {
+    const unsub = await sudoCall.signAndSend(alice, (result: any) => {
       if (result.status.isInBlock) {
-          unsub();
-          resolve();
+        unsub();
+        resolve();
       }
-      });
+    });
   };
 
   return new Promise(callTx);
@@ -119,11 +143,11 @@ function parachainMultiLocation(paraId: number): any {
       parents: 0,
       interior: {
         X1: {
-          Parachain: paraId
-        }
-      }
-    }
-  }
+          Parachain: paraId,
+        },
+      },
+    },
+  };
 }
 
 function featureFlag(flagName: string): boolean {
