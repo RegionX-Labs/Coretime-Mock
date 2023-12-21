@@ -1,10 +1,13 @@
 {
-  "name": "chopstick",
+  "name": "coretime-mock",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "init": "npx ts-node src/init.ts"
+    "chopsticks": "npx @acala-network/chopsticks@latest -c ./configs/coretime-rococo.yml",
+    "zombienet": "",
+    "chopsticks-init": "npx ts-node src/chopsticks_init.ts",
+    "zombienet-init": "npx ts-node src/zombienet_init.ts"
   },
   "keywords": [],
   "author": "",

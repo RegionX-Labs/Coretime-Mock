@@ -30,7 +30,6 @@ async function startBulkSale(rococoApi: ApiPromise, coretimeApi: ApiPromise) {
   const alice = keyring.addFromUri("//Alice");
   await cryptoWaitReady();
 
-  console.log(alice.address);
   // Alice buys a region.
   await purchaseRegion(coretimeApi, alice);
   console.log("Region purchased");
@@ -42,7 +41,6 @@ async function purchaseRegion(
 ): Promise<void> {
   const callTx = async (resolve: () => void) => {
     const purchase = coretimeApi.tx.broker.purchase(consts.INITIAL_PRICE * 2);
-    console.log(purchase.data);
     const unsub = await purchase.signAndSend(buyer, (result: any) => {
       if (result.status.isInBlock) {
         unsub();

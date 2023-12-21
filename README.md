@@ -21,19 +21,15 @@ The Coretime chain is already deployed on Rococo (🥳) so that allows us to use
 The steps to run a Coretime chain locally and setup the mock environment:
 
 ```
-cd chopstick
+npm i
 
 # This will run a parallel copy of the Coretime chain
-npx @acala-network/chopsticks@latest -c ./configs/coretime-rococo.yml
+npm run chopsticks
 
 # In a new terminal:
 
-cd chopsticks
-
-npm i
-
 # This will add some mock data to the Coretime chain
-npm run init
+npm run chopsticks-init
 ```
 
 ### Getting started with Zombienet
