@@ -27,6 +27,7 @@ async function init() {
   }
 
   await configureBroker(rococoApi, coretimeApi);
+  await startSales(rococoApi, coretimeApi);
 }
 
 init().then(() => process.exit(0));
@@ -35,41 +36,14 @@ async function configureBroker(rococoApi: ApiPromise, coretimeApi: ApiPromise): 
   console.log(`Setting the initial configuration for the broker pallet`);
 
   const configCall = u8aToHex(coretimeApi.tx.broker.configure(consts.CONFIG).method.toU8a());
-  const xcmCall = rococoApi.tx.xcmPallet.send(CORETIME_CHAIN, {V3: [
-    {
-      UnpaidExecution: {
-        check_origin: null,
-        weight_limit: "Unlimited"
-      }
-    },
-    {
-      Transact: {
-        originKind: "Superuser",
-        requireWeightAtMost: {
-          refTime: 1000000000,
-          proofSize: 900000,
-        },
-        call: {
-          encoded: configCall
-        }
-      }
-    }
-  ]});
+  return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, configCall);
+}
 
-  const sudoCall = rococoApi.tx.sudo.sudo(xcmCall);
+async function startSales(rococoApi: ApiPromise, coretimeApi: ApiPromise): Promise<void> {
+  console.log(`Starting the bulk sale`);
 
-  const alice = keyring.addFromUri("//Alice");
-
-  const callTx = async (resolve: () => void) => {
-      const unsub = await sudoCall.signAndSend(alice, (result: any) => {
-      if (result.status.isInBlock) {
-          unsub();
-          resolve();
-      }
-      });
-  };
-
-  return new Promise(callTx);
+  const startSaleCall = u8aToHex(coretimeApi.tx.broker.startSales(consts.INITIAL_PRICE, consts.CORE_COUNT).method.toU8a());
+  return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, startSaleCall);
 }
 
 async function openHrmpChannel(rococoApi: ApiPromise, sender: number, recipient: number): Promise<void> {
@@ -99,12 +73,55 @@ async function openHrmpChannel(rococoApi: ApiPromise, sender: number, recipient:
   return new Promise(callTx);
 }
 
-const CORETIME_CHAIN = {
-  V3: {
-    parents: 0,
-    interior: {
-      X1: {
-        Parachain: CORETIME_CHAIN_PARA_ID
+async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall: string): Promise<void> {
+  const xcmCall = api.tx.xcmPallet.send(parachainMultiLocation(destParaId), {V3: [
+    {
+      UnpaidExecution: {
+        check_origin: null,
+        weight_limit: "Unlimited"
+      }
+    },
+    {
+      Transact: {
+        originKind: "Superuser",
+        requireWeightAtMost: {
+          refTime: 5000000000,
+          proofSize: 900000,
+        },
+        call: {
+          encoded: encodedCall
+        }
+      }
+    }
+  ]});
+
+  console.log(encodedCall);
+
+  const sudoCall = api.tx.sudo.sudo(xcmCall);
+
+  const alice = keyring.addFromUri("//Alice");
+
+  const callTx = async (resolve: () => void) => {
+      const unsub = await sudoCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+          unsub();
+          resolve();
+      }
+      });
+  };
+
+  return new Promise(callTx);
+}
+
+// TODO move to a separate file
+function parachainMultiLocation(paraId: number): any {
+  return {
+    V3: {
+      parents: 0,
+      interior: {
+        X1: {
+          Parachain: paraId
+        }
       }
     }
   }
