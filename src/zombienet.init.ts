@@ -68,13 +68,16 @@ async function startSales(
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, startSaleCall);
 }
 
-async function setBalance(rococoApi : ApiPromise, coretimeApi: ApiPromise, who: string, balance: number) { 
+async function setBalance(
+  rococoApi: ApiPromise,
+  coretimeApi: ApiPromise,
+  who: string,
+  balance: number,
+) {
   console.log(`Setting balance of ${who} to ${balance}`);
 
   const setBalanceCall = u8aToHex(
-    coretimeApi.tx.balances
-      .forceSetBalance(who, balance)
-      .method.toU8a(),
+    coretimeApi.tx.balances.forceSetBalance(who, balance).method.toU8a(),
   );
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, setBalanceCall);
 }
@@ -173,4 +176,4 @@ function featureFlag(flagName: string): boolean {
   return process.argv.includes(`--${flagName}`);
 }
 
-const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
