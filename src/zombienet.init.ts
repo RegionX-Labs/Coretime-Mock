@@ -1,6 +1,7 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
+import { purchaseRegion } from "./common";
 import * as consts from "./consts";
 import process from "process";
 
@@ -30,6 +31,13 @@ async function init() {
 
   await configureBroker(rococoApi, coretimeApi);
   await startSales(rococoApi, coretimeApi);
+
+  const alice = keyring.addFromUri("//Alice");
+  await setBalance(rococoApi, coretimeApi, alice.address, 1000 * consts.UNIT);
+
+  // Takes some time to get everything ready before being able to perform a purchase.
+  await sleep(60000);
+  await purchaseRegion(coretimeApi, alice);
 }
 
 init().then(() => process.exit(0));
@@ -58,6 +66,17 @@ async function startSales(
       .method.toU8a(),
   );
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, startSaleCall);
+}
+
+async function setBalance(rococoApi : ApiPromise, coretimeApi: ApiPromise, who: string, balance: number) { 
+  console.log(`Setting balance of ${who} to ${balance}`);
+
+  const setBalanceCall = u8aToHex(
+    coretimeApi.tx.balances
+      .forceSetBalance(who, balance)
+      .method.toU8a(),
+  );
+  return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, setBalanceCall);
 }
 
 async function openHrmpChannel(
@@ -153,3 +172,5 @@ function parachainMultiLocation(paraId: number): any {
 function featureFlag(flagName: string): boolean {
   return process.argv.includes(`--${flagName}`);
 }
+
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
