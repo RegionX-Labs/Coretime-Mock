@@ -21,18 +21,24 @@ To run the local environment, we will first need to get all the necessary binari
 If we only want to test functionality that is not related to any of the contracts, we can simply run the minimal_network.toml zombienet script:
 
 ```
-# This will only run the Rococo relay chain and the Coretime chain
+# This script compiles all the necessary binaries for running a Rococo relay chain,
+# Coretime chain.
 ./scripts/minimal_init.sh
 
-./zombienet-linux -p native spawn ./zombienet/minimal_network.toml
+# Runs the zombienet network:
+npm run zombienet
 ```
 
 In case we want to run the full local network, which will allow us to test the contracts as well, the following commands need to be run instead:
 
 ```
+# This script compiles all the necessary binaries for running a Rococo relay chain,
+# Coretime chain, and a smart contract chain.
 ./scripts/full_init.sh
 
 ./zombienet-linux -p native spawn ./zombienet/full_network.toml
+# Runs the full zombienet network:
+npm run zombienet:full
 ```
 
 ### Getting started with Chopsticks
