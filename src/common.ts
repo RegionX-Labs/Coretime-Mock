@@ -24,17 +24,7 @@ export async function purchaseRegion(
 
 export function log(message: string) {
   // Green log.
-  console.log("\x1b[42m%s\x1b[0m", message);
-}
-
-export function loadFileAsBytes(filePath: string) {
-  try {
-      const data = fs.readFileSync(filePath);
-      return new Uint8Array(data);
-  } catch (error) {
-      console.error(error);
-      throw error;
-  }
+  console.log("\x1b[32m%s\x1b[0m", message);
 }
 
 export function normalizePath(path: string) {

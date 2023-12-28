@@ -1,7 +1,7 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
-import { purchaseRegion, log, loadFileAsBytes, normalizePath } from "./common";
+import { purchaseRegion, log, normalizePath } from "./common";
 import { Abi } from '@polkadot/api-contract';
 import { program } from 'commander';
 import fs from "fs";
@@ -137,8 +137,7 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
 
   const value = 0;
   const storageDepositLimit = null;
-  // TODO: don't hardcode path here:
-  const wasm = loadFileAsBytes(`${contractsPath}/xc_regions/xc_regions.wasm`);
+  const wasm = fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.wasm`);
   const abi = new Abi(
     fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.json`, 'utf-8'),
     contractsApi.registry.getChainProperties()
