@@ -21,3 +21,5 @@ bin/*
 
 node_modules/
 db.*
+
+artifacts/

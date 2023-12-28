@@ -1,7 +1,9 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
-import { purchaseRegion } from "./common";
+import { purchaseRegion, log, loadFileAsBytes } from "./common";
+import { Abi } from '@polkadot/api-contract';
+import fs from "fs";
 import * as consts from "./consts";
 import process from "process";
 
@@ -10,11 +12,15 @@ const FULL_NETWORK = "fullNetwork";
 const CORETIME_CHAIN_PARA_ID = 1005;
 const CONTRACTS_CHAIN_PARA_ID = 2000;
 
+const ROCOCO_ENDPOINT = "ws://127.0.0.1:9900";
+const CORETIME_ENDPOINT = "ws://127.0.0.1:9910";
+const CONTRACTS_ENDPOINT = "ws://127.0.0.1:9920";
+
 const keyring = new Keyring({ type: "sr25519" });
 
 async function init() {
-  const rococoWsProvider = new WsProvider("ws://127.0.0.1:9900");
-  const coretimeWsProvider = new WsProvider("ws://127.0.0.1:9910");
+  const rococoWsProvider = new WsProvider(ROCOCO_ENDPOINT);
+  const coretimeWsProvider = new WsProvider(CORETIME_ENDPOINT);
 
   const coretimeApi = await ApiPromise.create({ provider: coretimeWsProvider });
   const rococoApi = await ApiPromise.create({ provider: rococoWsProvider });
@@ -22,12 +28,18 @@ async function init() {
   await cryptoWaitReady();
 
   if (featureFlag(FULL_NETWORK)) {
-    await openHrmpChannel(
+   /* await openHrmpChannel(
       rococoApi,
       CORETIME_CHAIN_PARA_ID,
       CONTRACTS_CHAIN_PARA_ID,
-    );
+    );*/
+
+    const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
+    const contractsApi = await ApiPromise.create({ provider: contractsProvider });
+
+    await deployXcRegionsCode(contractsApi);
   }
+  /*
 
   await configureBroker(rococoApi, coretimeApi);
   await startSales(rococoApi, coretimeApi);
@@ -38,6 +50,7 @@ async function init() {
   // Takes some time to get everything ready before being able to perform a purchase.
   await sleep(60000);
   await purchaseRegion(coretimeApi, alice);
+  */
 }
 
 init().then(() => process.exit(0));
@@ -46,7 +59,7 @@ async function configureBroker(
   rococoApi: ApiPromise,
   coretimeApi: ApiPromise,
 ): Promise<void> {
-  console.log(`Setting the initial configuration for the broker pallet`);
+  log(`Setting the initial configuration for the broker pallet`);
 
   const configCall = u8aToHex(
     coretimeApi.tx.broker.configure(consts.CONFIG).method.toU8a(),
@@ -58,7 +71,7 @@ async function startSales(
   rococoApi: ApiPromise,
   coretimeApi: ApiPromise,
 ): Promise<void> {
-  console.log(`Starting the bulk sale`);
+  log(`Starting the bulk sale`);
 
   const startSaleCall = u8aToHex(
     coretimeApi.tx.broker
@@ -74,7 +87,7 @@ async function setBalance(
   who: string,
   balance: number,
 ) {
-  console.log(`Setting balance of ${who} to ${balance}`);
+  log(`Setting balance of ${who} to ${balance}`);
 
   const setBalanceCall = u8aToHex(
     coretimeApi.tx.balances.forceSetBalance(who, balance).method.toU8a(),
@@ -87,7 +100,7 @@ async function openHrmpChannel(
   sender: number,
   recipient: number,
 ): Promise<void> {
-  console.log(`Openeing HRMP channel between ${sender} - ${recipient}`);
+  log(`Openeing HRMP channel between ${sender} - ${recipient}`);
 
   const newHrmpChannel = [
     sender,
@@ -103,6 +116,40 @@ async function openHrmpChannel(
 
   const callTx = async (resolve: () => void) => {
     const unsub = await sudoCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+        unsub();
+        resolve();
+      }
+    });
+  };
+
+  return new Promise(callTx);
+}
+
+async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
+  log(`Uploading xcRegions contract code`);
+  const alice = keyring.addFromUri("//Alice");
+
+  const value = 0;
+  const storageDepositLimit = null;
+  // TODO: don't hardcode path here:
+  const wasm = loadFileAsBytes("./artifacts/xc_regions/xc_regions.wasm");
+  const abi = new Abi(
+    fs.readFileSync("./artifacts/xc_regions/xc_regions.json", 'utf-8'),
+    contractsApi.registry.getChainProperties()
+  );
+
+  const instantiate = contractsApi.tx.contracts.instantiateWithCode(
+    value,
+    getMaxGasLimit(),
+    storageDepositLimit,
+    u8aToHex(wasm),
+    abi.findConstructor(0).toU8a([]),
+    null,
+  );
+
+  const callTx = async (resolve: () => void) => {
+    const unsub = await instantiate.signAndSend(alice, (result: any) => {
       if (result.status.isInBlock) {
         unsub();
         resolve();
@@ -129,10 +176,7 @@ async function forceSendXcmCall(
       {
         Transact: {
           originKind: "Superuser",
-          requireWeightAtMost: {
-            refTime: 5000000000,
-            proofSize: 900000,
-          },
+          requireWeightAtMost: getMaxGasLimit(),
           call: {
             encoded: encodedCall,
           },
@@ -141,7 +185,7 @@ async function forceSendXcmCall(
     ],
   });
 
-  console.log(encodedCall);
+  log(encodedCall);
 
   const sudoCall = api.tx.sudo.sudo(xcmCall);
 
@@ -175,5 +219,12 @@ function parachainMultiLocation(paraId: number): any {
 function featureFlag(flagName: string): boolean {
   return process.argv.includes(`--${flagName}`);
 }
+
+const getMaxGasLimit = () => {
+  return {
+    refTime: 5000000000,
+    proofSize: 900000,
+  }
+};
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));

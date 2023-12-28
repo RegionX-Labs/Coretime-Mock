@@ -1,5 +1,5 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
-import { purchaseRegion } from "./common";
+import { purchaseRegion, log } from "./common";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 import { Timeslice } from "./types";
 import * as consts from "./consts";
@@ -23,16 +23,16 @@ async function startBulkSale(rococoApi: ApiPromise, coretimeApi: ApiPromise) {
     await rococoApi.rpc.chain.getHeader()
   ).number.toNumber();
   await setStatus(coretimeApi, latestRcBlock);
-  console.log("status set");
+  log("status set");
   await initializeSale(coretimeApi, latestRcBlock);
-  console.log("sale initialized");
+  log("sale initialized");
 
   const alice = keyring.addFromUri("//Alice");
   await cryptoWaitReady();
 
   // Alice buys a region.
   await purchaseRegion(coretimeApi, alice);
-  console.log("Region purchased");
+  log("Region purchased");
 }
 
 async function setStatus(

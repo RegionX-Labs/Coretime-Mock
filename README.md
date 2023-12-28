@@ -47,7 +47,7 @@ npm run zombienet:full
 # After waiting a few minutes for the network initialization and once both parachains
 # begin block production, we can proceed to initialize the environment. 
 # This can be done by executing the following command:
-npm run zombienet-init --fullNetwork
+npm run zombienet-init:full
 ```
 
 ### Getting started with Chopsticks
