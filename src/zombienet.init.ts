@@ -2,10 +2,11 @@ import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 import { purchaseRegion, log, normalizePath } from "./common";
-import { Abi } from "@polkadot/api-contract";
+import { Abi, ContractPromise } from "@polkadot/api-contract";
 import { program } from "commander";
 import fs from "fs";
 import * as consts from "./consts";
+import { Region, RegionId } from "./types";
 import process from "process";
 
 program.option("--fullNetwork").option("--contracts <string>");
@@ -110,18 +111,15 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
 
   const value = 0;
   const storageDepositLimit = null;
-  const wasm = fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.wasm`);
-  const abi = new Abi(
-    fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.json`, "utf-8"),
-    contractsApi.registry.getChainProperties()
-  );
+  const wasm = getXcRegionsWasm(contractsPath);
+  const metadata = getXcRegionsMetadata(contractsApi, contractsPath);
 
   const instantiate = contractsApi.tx.contracts.instantiateWithCode(
     value,
     getMaxGasLimit(),
     storageDepositLimit,
     u8aToHex(wasm),
-    abi.findConstructor(0).toU8a([]),
+    metadata.findConstructor(0).toU8a([]),
     null
   );
 
@@ -135,6 +133,27 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
   };
 
   return new Promise(callTx);
+}
+
+// Create a mock collection that will represent regions.
+async function createRegionCollection(contractsApi: ApiPromise) {
+  // TODO
+}
+
+async function mintRegion(contractsApi: ApiPromise, regionId: RegionId) {
+  // TODO
+}
+
+async function initXcRegion(contractsApi: ApiPromise, address: string, region: Region) {
+  log(`Initializing the metadata for a xc-region`);
+
+  const contractsPath = normalizePath(program.opts().contracts);
+
+  const metadata = getXcRegionsMetadata(contractsApi, contractsPath);
+  const xcRegionsContract = new ContractPromise(contractsApi, metadata, address);
+
+  // Init the metadata:
+  // TODO
 }
 
 async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall: string): Promise<void> {
@@ -195,3 +214,11 @@ const getMaxGasLimit = () => {
 };
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+const getXcRegionsMetadata = (contractsApi: ApiPromise, contractsPath: string) =>
+  new Abi(
+    fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.json`, "utf-8"),
+    contractsApi.registry.getChainProperties()
+  );
+
+const getXcRegionsWasm = (contractsPath: string) => fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.wasm`);
