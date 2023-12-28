@@ -2,15 +2,13 @@ import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 import { purchaseRegion, log, normalizePath } from "./common";
-import { Abi } from '@polkadot/api-contract';
-import { program } from 'commander';
+import { Abi } from "@polkadot/api-contract";
+import { program } from "commander";
 import fs from "fs";
 import * as consts from "./consts";
 import process from "process";
 
-program
-  .option('--fullNetwork')
-  .option('--contracts <string>');
+program.option("--fullNetwork").option("--contracts <string>");
 
 program.parse(process.argv);
 
@@ -33,11 +31,7 @@ async function init() {
   await cryptoWaitReady();
 
   if (program.opts().fullNetwork) {
-    await openHrmpChannel(
-      rococoApi,
-      CORETIME_CHAIN_PARA_ID,
-      CONTRACTS_CHAIN_PARA_ID,
-    );
+    await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
 
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
     const contractsApi = await ApiPromise.create({ provider: contractsProvider });
@@ -58,51 +52,30 @@ async function init() {
 
 init().then(() => process.exit(0));
 
-async function configureBroker(
-  rococoApi: ApiPromise,
-  coretimeApi: ApiPromise,
-): Promise<void> {
+async function configureBroker(rococoApi: ApiPromise, coretimeApi: ApiPromise): Promise<void> {
   log(`Setting the initial configuration for the broker pallet`);
 
-  const configCall = u8aToHex(
-    coretimeApi.tx.broker.configure(consts.CONFIG).method.toU8a(),
-  );
+  const configCall = u8aToHex(coretimeApi.tx.broker.configure(consts.CONFIG).method.toU8a());
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, configCall);
 }
 
-async function startSales(
-  rococoApi: ApiPromise,
-  coretimeApi: ApiPromise,
-): Promise<void> {
+async function startSales(rococoApi: ApiPromise, coretimeApi: ApiPromise): Promise<void> {
   log(`Starting the bulk sale`);
 
   const startSaleCall = u8aToHex(
-    coretimeApi.tx.broker
-      .startSales(consts.INITIAL_PRICE, consts.CORE_COUNT)
-      .method.toU8a(),
+    coretimeApi.tx.broker.startSales(consts.INITIAL_PRICE, consts.CORE_COUNT).method.toU8a()
   );
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, startSaleCall);
 }
 
-async function setBalance(
-  rococoApi: ApiPromise,
-  coretimeApi: ApiPromise,
-  who: string,
-  balance: number,
-) {
+async function setBalance(rococoApi: ApiPromise, coretimeApi: ApiPromise, who: string, balance: number) {
   log(`Setting balance of ${who} to ${balance}`);
 
-  const setBalanceCall = u8aToHex(
-    coretimeApi.tx.balances.forceSetBalance(who, balance).method.toU8a(),
-  );
+  const setBalanceCall = u8aToHex(coretimeApi.tx.balances.forceSetBalance(who, balance).method.toU8a());
   return forceSendXcmCall(rococoApi, CORETIME_CHAIN_PARA_ID, setBalanceCall);
 }
 
-async function openHrmpChannel(
-  rococoApi: ApiPromise,
-  sender: number,
-  recipient: number,
-): Promise<void> {
+async function openHrmpChannel(rococoApi: ApiPromise, sender: number, recipient: number): Promise<void> {
   log(`Openeing HRMP channel between ${sender} - ${recipient}`);
 
   const newHrmpChannel = [
@@ -139,7 +112,7 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
   const storageDepositLimit = null;
   const wasm = fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.wasm`);
   const abi = new Abi(
-    fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.json`, 'utf-8'),
+    fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.json`, "utf-8"),
     contractsApi.registry.getChainProperties()
   );
 
@@ -149,7 +122,7 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
     storageDepositLimit,
     u8aToHex(wasm),
     abi.findConstructor(0).toU8a([]),
-    null,
+    null
   );
 
   const callTx = async (resolve: () => void) => {
@@ -164,11 +137,7 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
   return new Promise(callTx);
 }
 
-async function forceSendXcmCall(
-  api: ApiPromise,
-  destParaId: number,
-  encodedCall: string,
-): Promise<void> {
+async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall: string): Promise<void> {
   const xcmCall = api.tx.xcmPallet.send(parachainMultiLocation(destParaId), {
     V3: [
       {
@@ -188,7 +157,7 @@ async function forceSendXcmCall(
       },
     ],
   });
- 
+
   const sudoCall = api.tx.sudo.sudo(xcmCall);
 
   const alice = keyring.addFromUri("//Alice");
@@ -222,7 +191,7 @@ const getMaxGasLimit = () => {
   return {
     refTime: 5000000000,
     proofSize: 900000,
-  }
+  };
 };
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));

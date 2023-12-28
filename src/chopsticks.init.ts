@@ -19,9 +19,7 @@ async function init() {
 init().then(() => process.exit(0));
 
 async function startBulkSale(rococoApi: ApiPromise, coretimeApi: ApiPromise) {
-  const latestRcBlock = (
-    await rococoApi.rpc.chain.getHeader()
-  ).number.toNumber();
+  const latestRcBlock = (await rococoApi.rpc.chain.getHeader()).number.toNumber();
   await setStatus(coretimeApi, latestRcBlock);
   log("status set");
   await initializeSale(coretimeApi, latestRcBlock);
@@ -35,10 +33,7 @@ async function startBulkSale(rococoApi: ApiPromise, coretimeApi: ApiPromise) {
   log("Region purchased");
 }
 
-async function setStatus(
-  coretimeApi: ApiPromise,
-  latestRcBlock: number,
-): Promise<any> {
+async function setStatus(coretimeApi: ApiPromise, latestRcBlock: number): Promise<any> {
   const commitTimeslice = getLatestTimesliceReadyToCommit(latestRcBlock);
 
   const status = {
@@ -57,10 +52,7 @@ async function setStatus(
   return await coretimeApi.rpc("dev_newBlock");
 }
 
-async function initializeSale(
-  coretimeApi: ApiPromise,
-  latestRcBlock: number,
-): Promise<any> {
+async function initializeSale(coretimeApi: ApiPromise, latestRcBlock: number): Promise<any> {
   const now = (await coretimeApi.rpc.chain.getHeader()).number.toNumber();
   const commitTimeslice = getLatestTimesliceReadyToCommit(latestRcBlock);
 
@@ -89,6 +81,6 @@ function currentTimeslice(latestRcBlock: number) {
 }
 
 function getLatestTimesliceReadyToCommit(latestRcBlock: number): Timeslice {
-  let advanced = latestRcBlock + consts.CONFIG.advance_notice;
+  const advanced = latestRcBlock + consts.CONFIG.advance_notice;
   return Math.floor(advanced / consts.TIMESLICE_PERIOD);
 }

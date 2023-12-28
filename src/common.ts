@@ -1,12 +1,8 @@
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import * as consts from "./consts";
-import fs from "fs";
 
-export async function purchaseRegion(
-  coretimeApi: ApiPromise,
-  buyer: KeyringPair,
-): Promise<void> {
+export async function purchaseRegion(coretimeApi: ApiPromise, buyer: KeyringPair): Promise<void> {
   log(`Purchasing a reigon.`);
 
   const callTx = async (resolve: () => void) => {
@@ -28,7 +24,7 @@ export function log(message: string) {
 }
 
 export function normalizePath(path: string) {
-  if (path.endsWith('/') && path.length > 1) {
+  if (path.endsWith("/") && path.length > 1) {
     return path.slice(0, -1);
   }
   return path;
