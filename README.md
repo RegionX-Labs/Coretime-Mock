@@ -18,9 +18,9 @@ The local environment consists of three chains:
 
 To run the local environment, we will first need to get all the necessary binaries.
 
-If we only want to test functionality that is not related to any of the contracts, we can simply run the minimal_network.toml zombienet script:
+If we only want to test functionality that is not related to any of the contracts, we can simply run the `minimal_network.toml` zombienet script:
 
-```
+```sh
 # This script compiles all the necessary binaries for running a Rococo relay chain,
 # Coretime chain.
 ./scripts/minimal_init.sh
@@ -36,12 +36,11 @@ npm run zombienet-init
 
 In case we want to run the full local network, which will allow us to test the contracts as well, the following commands need to be run instead:
 
-```
+```sh
 # This script compiles all the necessary binaries for running a Rococo relay chain,
 # Coretime chain, and a smart contract chain.
 ./scripts/full_init.sh
 
-./zombienet-linux -p native spawn ./zombienet/full_network.toml
 # Runs the full zombienet network:
 npm run zombienet:full
 
@@ -57,7 +56,7 @@ The Coretime chain is already deployed on Rococo (🥳) so that allows us to use
 
 The steps to run a Coretime chain locally and setup the mock environment:
 
-```
+```sh
 npm i
 
 # This will run a parallel copy of the Coretime chain
@@ -75,7 +74,7 @@ The Coretime chain is already deployed on Rococo (🥳) so that allows us to use
 
 The steps to run a Coretime chain locally and setup the mock environment:
 
-```
+```sh
 npm i
 
 # This will run a parallel copy of the Coretime chain
