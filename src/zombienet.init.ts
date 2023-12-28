@@ -1,13 +1,18 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
-import { purchaseRegion, log, loadFileAsBytes } from "./common";
+import { purchaseRegion, log, loadFileAsBytes, normalizePath } from "./common";
 import { Abi } from '@polkadot/api-contract';
+import { program } from 'commander';
 import fs from "fs";
 import * as consts from "./consts";
 import process from "process";
 
-const FULL_NETWORK = "fullNetwork";
+program
+  .option('--fullNetwork')
+  .option('--contracts <string>');
+
+program.parse(process.argv);
 
 const CORETIME_CHAIN_PARA_ID = 1005;
 const CONTRACTS_CHAIN_PARA_ID = 2000;
@@ -27,19 +32,18 @@ async function init() {
 
   await cryptoWaitReady();
 
-  if (featureFlag(FULL_NETWORK)) {
-   /* await openHrmpChannel(
+  if (program.opts().fullNetwork) {
+    await openHrmpChannel(
       rococoApi,
       CORETIME_CHAIN_PARA_ID,
       CONTRACTS_CHAIN_PARA_ID,
-    );*/
+    );
 
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
     const contractsApi = await ApiPromise.create({ provider: contractsProvider });
 
     await deployXcRegionsCode(contractsApi);
   }
-  /*
 
   await configureBroker(rococoApi, coretimeApi);
   await startSales(rococoApi, coretimeApi);
@@ -50,7 +54,6 @@ async function init() {
   // Takes some time to get everything ready before being able to perform a purchase.
   await sleep(60000);
   await purchaseRegion(coretimeApi, alice);
-  */
 }
 
 init().then(() => process.exit(0));
@@ -130,12 +133,14 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
   log(`Uploading xcRegions contract code`);
   const alice = keyring.addFromUri("//Alice");
 
+  const contractsPath = normalizePath(program.opts().contracts);
+
   const value = 0;
   const storageDepositLimit = null;
   // TODO: don't hardcode path here:
-  const wasm = loadFileAsBytes("./artifacts/xc_regions/xc_regions.wasm");
+  const wasm = loadFileAsBytes(`${contractsPath}/xc_regions/xc_regions.wasm`);
   const abi = new Abi(
-    fs.readFileSync("./artifacts/xc_regions/xc_regions.json", 'utf-8'),
+    fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.json`, 'utf-8'),
     contractsApi.registry.getChainProperties()
   );
 
@@ -184,9 +189,7 @@ async function forceSendXcmCall(
       },
     ],
   });
-
-  log(encodedCall);
-
+ 
   const sudoCall = api.tx.sudo.sudo(xcmCall);
 
   const alice = keyring.addFromUri("//Alice");
@@ -214,10 +217,6 @@ function parachainMultiLocation(paraId: number): any {
       },
     },
   };
-}
-
-function featureFlag(flagName: string): boolean {
-  return process.argv.includes(`--${flagName}`);
 }
 
 const getMaxGasLimit = () => {

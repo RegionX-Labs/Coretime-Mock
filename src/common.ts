@@ -36,3 +36,10 @@ export function loadFileAsBytes(filePath: string) {
       throw error;
   }
 }
+
+export function normalizePath(path: string) {
+  if (path.endsWith('/') && path.length > 1) {
+    return path.slice(0, -1);
+  }
+  return path;
+}
