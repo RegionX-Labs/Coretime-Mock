@@ -27,6 +27,11 @@ If we only want to test functionality that is not related to any of the contract
 
 # Runs the zombienet network:
 npm run zombienet
+
+# After waiting a few minutes for the network initialization and once the parachain 
+# begins block production, we can proceed to initialize the Coretime chain. 
+# This can be done by executing the following command:
+npm run zombienet-init  
 ```
 
 In case we want to run the full local network, which will allow us to test the contracts as well, the following commands need to be run instead:
@@ -39,6 +44,11 @@ In case we want to run the full local network, which will allow us to test the c
 ./zombienet-linux -p native spawn ./zombienet/full_network.toml
 # Runs the full zombienet network:
 npm run zombienet:full
+
+# After waiting a few minutes for the network initialization and once both parachains
+# begin block production, we can proceed to initialize the environment. 
+# This can be done by executing the following command:
+npm run zombienet-init --fullNetwork
 ```
 
 ### Getting started with Chopsticks
