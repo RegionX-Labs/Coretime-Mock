@@ -13,7 +13,7 @@ program.option("--fullNetwork").option("--contracts <string>");
 
 program.parse(process.argv);
 
-const REGION_COLLECTION_ID = 0;
+const REGION_COLLECTION_ID = 42;
 
 const CORETIME_CHAIN_PARA_ID = 1005;
 const CONTRACTS_CHAIN_PARA_ID = 2000;
@@ -32,6 +32,7 @@ async function init() {
   const rococoApi = await ApiPromise.create({ provider: rococoWsProvider });
 
   await cryptoWaitReady();
+  const alice = keyring.addFromUri("//Alice");
 
   if (program.opts().fullNetwork) {
     await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
@@ -39,15 +40,21 @@ async function init() {
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
     const contractsApi = await ApiPromise.create({ provider: contractsProvider });
 
-    await deployXcRegionsCode(contractsApi);
+    const xcRegionsAddress = await deployXcRegionsCode(contractsApi);
     await createRegionCollection(contractsApi);
-    await mintRegion(contractsApi, { begin: 0, core: 0, mask: consts.HALF_FULL_MASK });
+
+    const mockRegion: Region = {
+      regionId: { begin: 0, core: 0, mask: consts.HALF_FULL_MASK },
+      regionRecord: { end: 30, owner: alice.address, paid: null },
+    };
+
+    await mintRegion(contractsApi, mockRegion.regionId);
+    await initXcRegion(contractsApi, xcRegionsAddress, mockRegion);
   }
 
   await configureBroker(rococoApi, coretimeApi);
   await startSales(rococoApi, coretimeApi);
 
-  const alice = keyring.addFromUri("//Alice");
   await setBalance(rococoApi, coretimeApi, alice.address, 1000 * consts.UNIT);
 
   // Takes some time to get everything ready before being able to perform a purchase.
@@ -107,7 +114,7 @@ async function openHrmpChannel(rococoApi: ApiPromise, sender: number, recipient:
   return new Promise(callTx);
 }
 
-async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
+async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<string> {
   log(`Uploading xcRegions contract code`);
   const alice = keyring.addFromUri("//Alice");
 
@@ -127,11 +134,12 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
     null
   );
 
-  const callTx = async (resolve: () => void) => {
-    const unsub = await instantiate.signAndSend(alice, (result: any) => {
+  const callTx = async (resolve: (address: string) => void) => {
+    const unsub = await instantiate.signAndSend(alice, async (result: any) => {
       if (result.status.isInBlock) {
+        const address = await getContractAddress(contractsApi);
         unsub();
-        resolve();
+        resolve(address);
       }
     });
   };
@@ -177,16 +185,50 @@ async function mintRegion(contractsApi: ApiPromise, regionId: RegionId): Promise
   return new Promise(callTx);
 }
 
-async function initXcRegion(contractsApi: ApiPromise, address: string, region: Region) {
+async function initXcRegion(contractsApi: ApiPromise, contractAddress: string, region: Region): Promise<void> {
   log(`Initializing the metadata for a xc-region`);
 
   const contractsPath = normalizePath(program.opts().contracts);
 
   const metadata = getXcRegionsMetadata(contractsApi, contractsPath);
-  const xcRegionsContract = new ContractPromise(contractsApi, metadata, address);
+  const xcRegionsContract = new ContractPromise(contractsApi, metadata, contractAddress);
 
-  // Init the metadata:
-  // TODO
+  const rawRegionId = encodeRegionId(contractsApi, region.regionId);
+
+  const alice = keyring.addFromUri("//Alice");
+
+  const callArguments = [
+    rawRegionId,
+    // All the region metadata combined:
+    {
+      begin: region.regionId.begin,
+      end: region.regionRecord.end,
+      core: region.regionId.core,
+      mask: region.regionId.mask,
+    },
+  ];
+
+  const { gasRequired } = await xcRegionsContract.query["regionMetadata::init"](
+    alice.address,
+    { storageDepositLimit: null, gasLimit: -1 },
+    ...callArguments
+  );
+
+  const initCall = xcRegionsContract.tx["regionMetadata::init"](
+    { gasLimit: gasRequired, storageDepositLimit: null },
+    ...callArguments
+  );
+
+  const callTx = async (resolve: () => void) => {
+    const unsub = await initCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+        unsub();
+        resolve();
+      }
+    });
+  };
+
+  return new Promise(callTx);
 }
 
 async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall: string): Promise<void> {
@@ -226,6 +268,21 @@ async function forceSendXcmCall(api: ApiPromise, destParaId: number, encodedCall
   return new Promise(callTx);
 }
 
+async function getContractAddress(contractsApi: ApiPromise): Promise<string> {
+  log("Getting contract address");
+  const events: any = await contractsApi.query.system.events();
+
+  for (const record of events) {
+    const { event } = record;
+    if (event.section === "contracts" && event.method === "Instantiated") {
+      log("Found contract address: " + event.data[1].toString());
+      return event.data[1].toString();
+    }
+  }
+
+  return "";
+}
+
 function parachainMultiLocation(paraId: number): any {
   return {
     V3: {
@@ -246,8 +303,6 @@ const getMaxGasLimit = () => {
   };
 };
 
-const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
 const getXcRegionsMetadata = (contractsApi: ApiPromise, contractsPath: string) =>
   new Abi(
     fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.json`, "utf-8"),
@@ -255,3 +310,5 @@ const getXcRegionsMetadata = (contractsApi: ApiPromise, contractsPath: string) =
   );
 
 const getXcRegionsWasm = (contractsPath: string) => fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.wasm`);
+
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
