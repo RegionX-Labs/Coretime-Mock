@@ -1,7 +1,7 @@
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
-import { purchaseRegion, log, normalizePath } from "./common";
+import { purchaseRegion, log, normalizePath, encodeRegionId } from "./common";
 import { Abi, ContractPromise } from "@polkadot/api-contract";
 import { program } from "commander";
 import fs from "fs";
@@ -12,6 +12,8 @@ import process from "process";
 program.option("--fullNetwork").option("--contracts <string>");
 
 program.parse(process.argv);
+
+const REGION_COLLECTION_ID = 0;
 
 const CORETIME_CHAIN_PARA_ID = 1005;
 const CONTRACTS_CHAIN_PARA_ID = 2000;
@@ -38,6 +40,8 @@ async function init() {
     const contractsApi = await ApiPromise.create({ provider: contractsProvider });
 
     await deployXcRegionsCode(contractsApi);
+    await createRegionCollection(contractsApi);
+    await mintRegion(contractsApi, { begin: 0, core: 0, mask: consts.HALF_FULL_MASK });
   }
 
   await configureBroker(rococoApi, coretimeApi);
@@ -136,12 +140,41 @@ async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<void> {
 }
 
 // Create a mock collection that will represent regions.
-async function createRegionCollection(contractsApi: ApiPromise) {
-  // TODO
+async function createRegionCollection(contractsApi: ApiPromise): Promise<void> {
+  log(`Creating the region collection`);
+
+  const alice = keyring.addFromUri("//Alice");
+  const createCollectionCall = contractsApi.tx.uniques.create(REGION_COLLECTION_ID, alice.address);
+
+  const callTx = async (resolve: () => void) => {
+    const unsub = await createCollectionCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+        unsub();
+        resolve();
+      }
+    });
+  };
+
+  return new Promise(callTx);
 }
 
-async function mintRegion(contractsApi: ApiPromise, regionId: RegionId) {
-  // TODO
+async function mintRegion(contractsApi: ApiPromise, regionId: RegionId): Promise<void> {
+  log(`Minting a region`);
+
+  const alice = keyring.addFromUri("//Alice");
+  const rawRegionId = encodeRegionId(contractsApi, regionId);
+  const createCollectionCall = contractsApi.tx.uniques.mint(REGION_COLLECTION_ID, rawRegionId, alice.address);
+
+  const callTx = async (resolve: () => void) => {
+    const unsub = await createCollectionCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+        unsub();
+        resolve();
+      }
+    });
+  };
+
+  return new Promise(callTx);
 }
 
 async function initXcRegion(contractsApi: ApiPromise, address: string, region: Region) {
