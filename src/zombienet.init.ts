@@ -8,8 +8,8 @@ import fs from "fs";
 import * as consts from "./consts";
 import { Region, RegionId } from "./types";
 import process from "process";
-import type { WeightV2 } from '@polkadot/types/interfaces'
-import { BN, bnToBn } from '@polkadot/util'
+import type { WeightV2 } from "@polkadot/types/interfaces";
+import { BN, bnToBn } from "@polkadot/util";
 
 program.option("--fullNetwork").option("--contracts <string>");
 
@@ -37,7 +37,7 @@ async function init() {
   const alice = keyring.addFromUri("//Alice");
 
   if (program.opts().fullNetwork) {
-    //await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
+    await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
 
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
     const contractsApi = await ApiPromise.create({ provider: contractsProvider });
@@ -320,14 +320,14 @@ const getMaxGasLimit = () => {
 };
 
 export const getGasLimit = (api: ApiPromise, _refTime: string | BN, _proofSize: string | BN): WeightV2 => {
-  const refTime = bnToBn(_refTime)
-  const proofSize = bnToBn(_proofSize)
+  const refTime = bnToBn(_refTime);
+  const proofSize = bnToBn(_proofSize);
 
-  return api.registry.createType('WeightV2', {
+  return api.registry.createType("WeightV2", {
     refTime,
     proofSize,
-  }) as WeightV2
-}
+  }) as WeightV2;
+};
 
 const getXcRegionsMetadata = (contractsApi: ApiPromise, contractsPath: string) =>
   new Abi(
