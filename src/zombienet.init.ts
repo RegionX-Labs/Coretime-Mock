@@ -39,10 +39,10 @@ async function init() {
   if (program.opts().fullNetwork) {
     const account = program.opts().account;
 
-    //await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
+    await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
 
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
-    const contractsApi = await ApiPromise.create({ provider: contractsProvider, types: {Id} } );
+    const contractsApi = await ApiPromise.create({ provider: contractsProvider, types: { Id } });
 
     const xcRegionsAddress = await deployXcRegionsCode(contractsApi);
     await createRegionCollection(contractsApi);
@@ -269,7 +269,7 @@ async function transferWrappedRegion(
 
   const alice = keyring.addFromUri("//Alice");
 
-  const id = contractsApi.createType('Id', { U128: rawRegionId }); 
+  const id = contractsApi.createType("Id", { U128: rawRegionId });
   const callArguments = [receiver, id, []];
 
   const transferCall = xcRegionsContract.tx["psp34::transfer"](
