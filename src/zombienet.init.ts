@@ -8,6 +8,8 @@ import fs from "fs";
 import * as consts from "./consts";
 import { Region, RegionId } from "./types";
 import process from "process";
+import type { WeightV2 } from '@polkadot/types/interfaces'
+import { BN, bnToBn } from '@polkadot/util'
 
 program.option("--fullNetwork").option("--contracts <string>");
 
@@ -35,7 +37,7 @@ async function init() {
   const alice = keyring.addFromUri("//Alice");
 
   if (program.opts().fullNetwork) {
-    await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
+    //await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
 
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
     const contractsApi = await ApiPromise.create({ provider: contractsProvider });
@@ -49,6 +51,7 @@ async function init() {
     };
 
     await mintRegion(contractsApi, mockRegion.regionId);
+    await approveTransfer(contractsApi, mockRegion.regionId, xcRegionsAddress);
     await initXcRegion(contractsApi, xcRegionsAddress, mockRegion);
   }
 
@@ -171,10 +174,29 @@ async function mintRegion(contractsApi: ApiPromise, regionId: RegionId): Promise
 
   const alice = keyring.addFromUri("//Alice");
   const rawRegionId = encodeRegionId(contractsApi, regionId);
-  const createCollectionCall = contractsApi.tx.uniques.mint(REGION_COLLECTION_ID, rawRegionId, alice.address);
+  const mintCall = contractsApi.tx.uniques.mint(REGION_COLLECTION_ID, rawRegionId, alice.address);
 
   const callTx = async (resolve: () => void) => {
-    const unsub = await createCollectionCall.signAndSend(alice, (result: any) => {
+    const unsub = await mintCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+        unsub();
+        resolve();
+      }
+    });
+  };
+
+  return new Promise(callTx);
+}
+
+async function approveTransfer(contractsApi: ApiPromise, regionId: RegionId, delegate: string): Promise<void> {
+  log(`Approving region to ${delegate}`);
+
+  const alice = keyring.addFromUri("//Alice");
+  const rawRegionId = encodeRegionId(contractsApi, regionId);
+  const approveCall = contractsApi.tx.uniques.approveTransfer(REGION_COLLECTION_ID, rawRegionId, delegate);
+
+  const callTx = async (resolve: () => void) => {
+    const unsub = await approveCall.signAndSend(alice, (result: any) => {
       if (result.status.isInBlock) {
         unsub();
         resolve();
@@ -208,14 +230,8 @@ async function initXcRegion(contractsApi: ApiPromise, contractAddress: string, r
     },
   ];
 
-  const { gasRequired } = await xcRegionsContract.query["regionMetadata::init"](
-    alice.address,
-    { storageDepositLimit: null, gasLimit: -1 },
-    ...callArguments
-  );
-
   const initCall = xcRegionsContract.tx["regionMetadata::init"](
-    { gasLimit: gasRequired, storageDepositLimit: null },
+    { gasLimit: getGasLimit(contractsApi, "8000000000", "250000"), storageDepositLimit: null },
     ...callArguments
   );
 
@@ -302,6 +318,16 @@ const getMaxGasLimit = () => {
     proofSize: 900000,
   };
 };
+
+export const getGasLimit = (api: ApiPromise, _refTime: string | BN, _proofSize: string | BN): WeightV2 => {
+  const refTime = bnToBn(_refTime)
+  const proofSize = bnToBn(_proofSize)
+
+  return api.registry.createType('WeightV2', {
+    refTime,
+    proofSize,
+  }) as WeightV2
+}
 
 const getXcRegionsMetadata = (contractsApi: ApiPromise, contractsPath: string) =>
   new Abi(
