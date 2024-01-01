@@ -6,12 +6,12 @@ import { Abi, ContractPromise } from "@polkadot/api-contract";
 import { program } from "commander";
 import fs from "fs";
 import * as consts from "./consts";
-import { Region, RegionId } from "./types";
+import { Region, RegionId, Id } from "./types";
 import process from "process";
 import type { WeightV2 } from "@polkadot/types/interfaces";
 import { BN, bnToBn } from "@polkadot/util";
 
-program.option("--fullNetwork").option("--contracts <string>");
+program.option("--fullNetwork").option("--contracts <string>").option("--account <string>");
 
 program.parse(process.argv);
 
@@ -37,10 +37,12 @@ async function init() {
   const alice = keyring.addFromUri("//Alice");
 
   if (program.opts().fullNetwork) {
-    await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
+    const account = program.opts().account;
+
+    //await openHrmpChannel(rococoApi, CORETIME_CHAIN_PARA_ID, CONTRACTS_CHAIN_PARA_ID);
 
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
-    const contractsApi = await ApiPromise.create({ provider: contractsProvider });
+    const contractsApi = await ApiPromise.create({ provider: contractsProvider, types: {Id} } );
 
     const xcRegionsAddress = await deployXcRegionsCode(contractsApi);
     await createRegionCollection(contractsApi);
@@ -53,6 +55,9 @@ async function init() {
     await mintRegion(contractsApi, mockRegion.regionId);
     await approveTransfer(contractsApi, mockRegion.regionId, xcRegionsAddress);
     await initXcRegion(contractsApi, xcRegionsAddress, mockRegion);
+    if (account) {
+      await transferWrappedRegion(contractsApi, xcRegionsAddress, mockRegion.regionId, account);
+    }
   }
 
   await configureBroker(rococoApi, coretimeApi);
@@ -237,6 +242,43 @@ async function initXcRegion(contractsApi: ApiPromise, contractAddress: string, r
 
   const callTx = async (resolve: () => void) => {
     const unsub = await initCall.signAndSend(alice, (result: any) => {
+      if (result.status.isInBlock) {
+        unsub();
+        resolve();
+      }
+    });
+  };
+
+  return new Promise(callTx);
+}
+
+async function transferWrappedRegion(
+  contractsApi: ApiPromise,
+  contractAddress: string,
+  regionId: RegionId,
+  receiver: string
+): Promise<void> {
+  log(`Transferring wrapped region to ${receiver}`);
+
+  const contractsPath = normalizePath(program.opts().contracts);
+
+  const metadata = getXcRegionsMetadata(contractsApi, contractsPath);
+  const xcRegionsContract = new ContractPromise(contractsApi, metadata, contractAddress);
+
+  const rawRegionId = encodeRegionId(contractsApi, regionId);
+
+  const alice = keyring.addFromUri("//Alice");
+
+  const id = contractsApi.createType('Id', { U128: rawRegionId }); 
+  const callArguments = [receiver, id, []];
+
+  const transferCall = xcRegionsContract.tx["psp34::transfer"](
+    { gasLimit: getGasLimit(contractsApi, "8000000000", "250000"), storageDepositLimit: null },
+    ...callArguments
+  );
+
+  const callTx = async (resolve: () => void) => {
+    const unsub = await transferCall.signAndSend(alice, (result: any) => {
       if (result.status.isInBlock) {
         unsub();
         resolve();
