@@ -36,6 +36,15 @@ async function init() {
   await cryptoWaitReady();
   const alice = keyring.addFromUri("//Alice");
 
+  await configureBroker(rococoApi, coretimeApi);
+  await startSales(rococoApi, coretimeApi);
+
+  await setBalance(rococoApi, coretimeApi, alice.address, 1000 * consts.UNIT);
+
+  // Takes some time to get everything ready before being able to perform a purchase.
+  await sleep(60000);
+  await purchaseRegion(coretimeApi, alice);
+
   if (program.opts().fullNetwork) {
     const account = program.opts().account;
 
@@ -59,15 +68,6 @@ async function init() {
       await transferWrappedRegion(contractsApi, xcRegionsAddress, mockRegion.regionId, account);
     }
   }
-
-  await configureBroker(rococoApi, coretimeApi);
-  await startSales(rococoApi, coretimeApi);
-
-  await setBalance(rococoApi, coretimeApi, alice.address, 1000 * consts.UNIT);
-
-  // Takes some time to get everything ready before being able to perform a purchase.
-  await sleep(60000);
-  await purchaseRegion(coretimeApi, alice);
 }
 
 init().then(() => process.exit(0));
