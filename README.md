@@ -25,6 +25,8 @@ If we only want to test functionality that is not related to any of the contract
 # Coretime chain.
 ./scripts/minimal_init.sh
 
+npm i
+
 # Runs the zombienet network:
 npm run zombienet
 
@@ -40,6 +42,8 @@ In case we want to run the full local network, which will allow us to test the c
 # This script compiles all the necessary binaries for running a Rococo relay chain,
 # Coretime chain, and a smart contract chain.
 ./scripts/full_init.sh
+
+npm i
 
 # Runs the full zombienet network:
 npm run zombienet:full
