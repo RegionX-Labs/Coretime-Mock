@@ -48,8 +48,12 @@ npm run zombienet:full
 After waiting a few minutes for the network initialization and once both parachains begin block production, we can proceed to initialize the environment.
 
 During initialization, the script establishes an HRMP connection between the Coretime chain and the smart contract chain. 
-After that the script will setup the Coretime chain, by setting the initial config and starting the bulk sale.
-Subsequently, it deploys the xc-region contract, mints a mock region, and stores its metadata. For easier testing, the script includes a feature allowing users to designate their account. When specified the wrapped region is transferred directly to the account, facilitating straightforward testing on the frontend.
+
+After that, the script will setup the Coretime chain, by setting the initial config and starting the bulk sale.
+
+Subsequently, it deploys the xc-region contract, mints a mock region, and stores its metadata.
+
+For easier testing, the script includes a feature allowing users to designate their account. When specified the wrapped region is transferred directly to the account, facilitating straightforward testing on the frontend.
 
 This can be done by executing the following command:
 ```sh
