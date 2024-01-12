@@ -67,7 +67,7 @@ async function init() {
 
     const mockRegion = new Region(
       { begin: 30, core: 0, mask: CoreMask.fromChunk(0, 40) },
-      { end: 60, owner: alice.address, paid: null },
+      { end: 60, owner: alice.address, paid: null }
     );
 
     await mintRegion(contractsApi, mockRegion);
