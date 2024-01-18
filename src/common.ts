@@ -29,7 +29,10 @@ export async function transferRegion(
   log(`Transferring a reigon to ${receiver}`);
 
   const callTx = async (resolve: () => void) => {
-    const transfer = coretimeApi.tx.broker.transfer(regionId, receiver);
+    const transfer = coretimeApi.tx.broker.transfer(
+      { begin: regionId.begin, core: regionId.core, mask: regionId.mask.getMask() },
+      receiver
+    );
     const unsub = await transfer.signAndSend(sender, (result: any) => {
       if (result.status.isInBlock) {
         unsub();
