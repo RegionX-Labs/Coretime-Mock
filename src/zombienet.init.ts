@@ -60,7 +60,12 @@ async function init() {
     const contractsProvider = new WsProvider(CONTRACTS_ENDPOINT);
     const contractsApi = await ApiPromise.create({ provider: contractsProvider, types: { Id } });
 
-    const xcRegionsAddress = await deployXcRegionsCode(contractsApi);
+    const xcRegionsAddress = await deployXcRegions(contractsApi);
+    log(`XcRegions address: ${xcRegionsAddress}`);
+
+    const marketAddress = await deployMarket(contractsApi, xcRegionsAddress);
+    log(`Market address: ${marketAddress}`);
+
     await createRegionCollection(contractsApi);
 
     const mockRegion = new Region(
@@ -127,23 +132,47 @@ async function openHrmpChannel(rococoApi: ApiPromise, sender: number, recipient:
   return new Promise(callTx);
 }
 
-async function deployXcRegionsCode(contractsApi: ApiPromise): Promise<string> {
+async function deployXcRegions(contractsApi: ApiPromise): Promise<string> {
   log(`Uploading xcRegions contract code`);
-  const alice = keyring.addFromUri("//Alice");
-
   const contractsPath = normalizePath(program.opts().contracts);
+
+  const wasm = getXcRegionsWasm(contractsPath);
+  const metadata = getXcRegionsMetadata(contractsApi, contractsPath);
+
+  return Promise.resolve(instantiateWithCode(contractsApi, wasm, metadata, []));
+}
+
+async function deployMarket(contractsApi: ApiPromise, xcRegionsContract: string): Promise<string> {
+  log(`Uploading market contract code`);
+  const contractsPath = normalizePath(program.opts().contracts);
+
+  const wasm = getMarketWasm(contractsPath);
+  const metadata = getMarketMetadata(contractsApi, contractsPath);
+  const listingDeposit = 0;
+  const timeslicePeriod = 80;
+
+  return Promise.resolve(
+    instantiateWithCode(contractsApi, wasm, metadata, [xcRegionsContract, listingDeposit, timeslicePeriod])
+  );
+}
+
+async function instantiateWithCode(
+  contractsApi: ApiPromise,
+  wasm: Buffer,
+  metadata: Abi,
+  params: any[]
+): Promise<string> {
+  const alice = keyring.addFromUri("//Alice");
 
   const value = 0;
   const storageDepositLimit = null;
-  const wasm = getXcRegionsWasm(contractsPath);
-  const metadata = getXcRegionsMetadata(contractsApi, contractsPath);
 
   const instantiate = contractsApi.tx.contracts.instantiateWithCode(
     value,
     getMaxGasLimit(),
     storageDepositLimit,
     u8aToHex(wasm),
-    metadata.findConstructor(0).toU8a([]),
+    metadata.findConstructor(0).toU8a(params),
     null
   );
 
@@ -319,7 +348,6 @@ async function getContractAddress(contractsApi: ApiPromise): Promise<string> {
   for (const record of events) {
     const { event } = record;
     if (event.section === "contracts" && event.method === "Instantiated") {
-      log("Found contract address: " + event.data[1].toString());
       return event.data[1].toString();
     }
   }
@@ -350,4 +378,13 @@ const getXcRegionsMetadata = (contractsApi: ApiPromise, contractsPath: string) =
     contractsApi.registry.getChainProperties()
   );
 
+const getMarketMetadata = (contractsApi: ApiPromise, contractsPath: string) =>
+  new Abi(
+    fs.readFileSync(`${contractsPath}/coretime_market/coretime_market.json`, "utf-8"),
+    contractsApi.registry.getChainProperties()
+  );
+
 const getXcRegionsWasm = (contractsPath: string) => fs.readFileSync(`${contractsPath}/xc_regions/xc_regions.wasm`);
+
+const getMarketWasm = (contractsPath: string) =>
+  fs.readFileSync(`${contractsPath}/coretime_market/coretime_market.wasm`);
