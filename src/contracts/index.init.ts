@@ -1,9 +1,10 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import Keyring from "@polkadot/keyring";
 import { CoreMask, Id, Region } from "coretime-utils";
-import { log } from "../utils";
+import { log, setBalance } from "../utils";
 import { deployMarket, deployXcRegions, initXcRegion, transferWrappedRegion } from "./contract";
 import { approveTransfer, createRegionCollection, mintRegion } from "./uniques";
+import * as consts from "../consts";
 
 const keyring = new Keyring({ type: "sr25519" });
 
@@ -30,6 +31,7 @@ export async function contractsInit(contractsEndpoint: string, account: string, 
   await approveTransfer(contractsApi, mockRegion, xcRegionsAddress);
   await initXcRegion(contractsApi, xcRegionsAddress, mockRegion, contractsPath);
   if (account) {
+    await setBalance(contractsApi, account, (10 ** 8 * consts.UNIT).toString());
     await transferWrappedRegion(contractsApi, xcRegionsAddress, mockRegion, account, contractsPath);
   }
 }

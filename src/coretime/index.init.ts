@@ -1,5 +1,5 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import { keyring, log } from "../utils";
+import { force, keyring, log, setBalance } from "../utils";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { CoreMask, RegionId } from "coretime-utils";
 import * as consts from "../consts";
@@ -13,7 +13,7 @@ export async function coretimeInit(coretimeEndpoint: string, coretimeAccount: st
   await configureBroker(coretimeApi);
   await startSales(coretimeApi);
 
-  await setBalance(coretimeApi, alice.address, 1000 * consts.UNIT);
+  await setBalance(coretimeApi, alice.address, (1000 * consts.UNIT).toString());
 
   const regionId = await purchaseRegion(coretimeApi, alice);
 
@@ -34,13 +34,6 @@ async function startSales(coretimeApi: ApiPromise): Promise<void> {
 
   const startSaleCall = coretimeApi.tx.broker.startSales(consts.INITIAL_PRICE, consts.CORE_COUNT);
   return force(coretimeApi, startSaleCall);
-}
-
-async function setBalance(coretimeApi: ApiPromise, who: string, balance: number) {
-  log(`Setting balance of ${who} to ${balance}`);
-
-  const setBalanceCall = coretimeApi.tx.balances.forceSetBalance(who, balance);
-  return force(coretimeApi, setBalanceCall);
 }
 
 export async function purchaseRegion(coretimeApi: ApiPromise, buyer: KeyringPair): Promise<RegionId> {
@@ -94,21 +87,4 @@ async function getRegionId(coretimeApi: ApiPromise): Promise<RegionId> {
   }
 
   return { begin: 0, core: 0, mask: CoreMask.voidMask() };
-}
-
-async function force(api: ApiPromise, call: any): Promise<void> {
-  const sudoCall = api.tx.sudo.sudo(call);
-
-  const alice = keyring.addFromUri("//Alice");
-
-  const callTx = async (resolve: () => void) => {
-    const unsub = await sudoCall.signAndSend(alice, (result: any) => {
-      if (result.status.isInBlock) {
-        unsub();
-        resolve();
-      }
-    });
-  };
-
-  return new Promise(callTx);
 }
