@@ -7,7 +7,6 @@ import { contractsInit } from "./contracts/index.init";
 import { normalizePath } from "./utils";
 
 program
-  .option("--dev")
   .option("--relayInit")
   .option("--coretimeInit")
   .option("--contractsInit")
@@ -22,7 +21,7 @@ const CONTRACTS_PARA_ID = 2000;
 
 const ROCOCO_ENDPOINT = "ws://127.0.0.1:9900";
 const CORETIME_ENDPOINT = "ws://127.0.0.1:9910";
-const CONTRACTS_ENDPOINT = program.opts().dev ? "ws://127.0.0.1:9944" : "ws://127.0.0.1:9920";
+const CONTRACTS_ENDPOINT = "ws://127.0.0.1:9920";
 
 async function init() {
   await cryptoWaitReady();
