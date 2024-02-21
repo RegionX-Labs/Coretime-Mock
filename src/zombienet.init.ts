@@ -35,7 +35,7 @@ async function init() {
   }
 
   if (program.opts().contractsInit) {
-    if(!program.opts().contractsPath) {
+    if (!program.opts().contractsPath) {
       throw new Error("--contractsPath must be specified");
     }
     const contractsPath = normalizePath(program.opts().contractsPath);
