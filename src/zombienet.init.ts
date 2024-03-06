@@ -12,7 +12,9 @@ program
   .option("--contractsInit")
   .option("--contractsPath <string>")
   .option("--contractsAccount <string>")
-  .option("--coretimeAccount <string>");
+  .option("--coretimeAccount <string>")
+  .option("--mintRegion")
+  .option("--mintXcRegions");
 
 program.parse(process.argv);
 
@@ -31,7 +33,7 @@ async function init() {
   }
 
   if (program.opts().coretimeInit) {
-    await coretimeInit(CORETIME_ENDPOINT, program.opts().coretimeAccount || "");
+    await coretimeInit(CORETIME_ENDPOINT, program.opts().coretimeAccount || "", program.opts().mintRegion);
   }
 
   if (program.opts().contractsInit) {
@@ -39,7 +41,12 @@ async function init() {
       throw new Error("--contractsPath must be specified");
     }
     const contractsPath = normalizePath(program.opts().contractsPath);
-    await contractsInit(CONTRACTS_ENDPOINT, program.opts().contractsAccount || "", contractsPath);
+    await contractsInit(
+      CONTRACTS_ENDPOINT,
+      program.opts().contractsAccount || "",
+      contractsPath,
+      program.opts().mintXcRegions
+    );
   }
 }
 
