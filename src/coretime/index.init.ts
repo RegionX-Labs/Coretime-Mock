@@ -16,7 +16,7 @@ export async function coretimeInit(coretimeEndpoint: string, coretimeAccount: st
 
   await setBalance(coretimeApi, alice.address, (1000 * consts.UNIT).toString());
 
-    const regionId = await purchaseRegion(coretimeApi, alice);
+  const regionId = await purchaseRegion(coretimeApi, alice);
 
   if (coretimeAccount) {
     await setBalance(coretimeApi, coretimeAccount, (1000 * consts.UNIT).toString());
