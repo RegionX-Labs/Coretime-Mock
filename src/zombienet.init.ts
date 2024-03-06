@@ -13,7 +13,6 @@ program
   .option("--contractsPath <string>")
   .option("--contractsAccount <string>")
   .option("--coretimeAccount <string>")
-  .option("--mintRegion")
   .option("--mintXcRegions");
 
 program.parse(process.argv);
@@ -33,7 +32,7 @@ async function init() {
   }
 
   if (program.opts().coretimeInit) {
-    await coretimeInit(CORETIME_ENDPOINT, program.opts().coretimeAccount || "", program.opts().mintRegion);
+    await coretimeInit(CORETIME_ENDPOINT, program.opts().coretimeAccount || "");
   }
 
   if (program.opts().contractsInit) {

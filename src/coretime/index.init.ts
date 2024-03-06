@@ -4,7 +4,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { CoreMask, RegionId } from "coretime-utils";
 import * as consts from "../consts";
 
-export async function coretimeInit(coretimeEndpoint: string, coretimeAccount: string, mint: boolean) {
+export async function coretimeInit(coretimeEndpoint: string, coretimeAccount: string) {
   const alice = keyring.addFromUri("//Alice");
 
   const coretimeWsProvider = new WsProvider(coretimeEndpoint);
@@ -16,13 +16,11 @@ export async function coretimeInit(coretimeEndpoint: string, coretimeAccount: st
 
   await setBalance(coretimeApi, alice.address, (1000 * consts.UNIT).toString());
 
-  if (mint) {
     const regionId = await purchaseRegion(coretimeApi, alice);
 
-    if (coretimeAccount) {
-      await setBalance(coretimeApi, coretimeAccount, (1000 * consts.UNIT).toString());
-      await transferRegion(coretimeApi, alice, coretimeAccount, regionId);
-    }
+  if (coretimeAccount) {
+    await setBalance(coretimeApi, coretimeAccount, (1000 * consts.UNIT).toString());
+    await transferRegion(coretimeApi, alice, coretimeAccount, regionId);
   }
 }
 
