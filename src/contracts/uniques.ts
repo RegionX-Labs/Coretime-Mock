@@ -24,6 +24,7 @@ export async function createRegionCollection(contractsApi: ApiPromise): Promise<
   return new Promise(callTx);
 }
 
+
 export async function registerXcRegionAsset(contractsApi: ApiPromise): Promise<void> {
   log(`Registering xc-region asset`);
 
@@ -41,6 +42,7 @@ export async function registerXcRegionAsset(contractsApi: ApiPromise): Promise<v
 
   return force(contractsApi, registerCall);
 }
+
 
 export async function mintRegion(contractsApi: ApiPromise, region: Region): Promise<void> {
   log(`Minting a region`);
