@@ -30,14 +30,6 @@ git submodule update --init
 
 To run the local environment, we will first need to get all the necessary binaries.
 
-If we only want to test functionality that is not related to any of the contracts, we can simply run the `minimal_network.toml` zombienet script:
-
-```sh
-# This script compiles all the necessary binaries for running a Rococo relay chain,
-# Coretime chain.
-./scripts/minimal_init.sh 
-```
-
 In case we want to run the full local network, which will allow us to test the contracts as well, we need to get the binary from the contracts parachain as well:
 
 ```sh
@@ -46,41 +38,46 @@ In case we want to run the full local network, which will allow us to test the c
 ./scripts/full_init.sh
 ```
 
-After waiting a few minutes for the network initialization and once both parachains begin block production, we can proceed to initialize the environment.
+Once everything has been successfully compiled, the local network can be started:
+```
+npm run zombienet:full
+```
 
-This repo provides an init program which will based on the selected options set up the local network appropriately. The program exposes the following options:
+After waiting a few minutes for the network initialization and once **both** parachains **begin block production**, we can proceed to initialize the environment.
+
+This repo provides an initialization program which will based on the selected options set up the local network accordingly. The program provides the following options:
 
 1.  `--relayInit`:
     
-    -   Description: Initializes the relay chain. The only thing this actually does is open an HRMP channel between the two parachains.
+    -   Description: Opens two HRMP channels: Coretime Chain <--> Contracts chain
 
 2.  `--coretimeInit`:
     
-    -   Description: Initializes the coretime chain by setting the initial configuration, starting the bulk sale and buying a region.
+    -   Description: Initializes the Coretime chain by setting the initial configuration, starting the bulk sale, and purchasing a region.
 
-3.  `--contractsInit`:
+3.  `--coretimeAccount <string>`:
     
-    -   Description: Initializes the contracts parachain by creating a collection to represent regions, and mints a mock region. Also, deploys both the `xc-regions` and the `coretime-market` contracts.
+    -   Description: When specified the program will transfer the purchased region to this account.
 
-4.  `--contractsAccount <string>`:
+4.  `--contractsInit`:
     
-    -   Description:  Specify an account on the contracts chain. When specified the program will transfer a mock region to this account.
-
-5.  `--contractsPath <string>`:
-    
-    -   Description:  The path to the compiled contracts.
-    
-6.  `--coretimeAccount <string>`:
-    
-    -   Description: Specify an account on the coretime chain. When specified the program will transfer a mock region to this account.
-
-7.  `--mintXcRegions`:
+    -   Description: Initializes the contracts parachain by creating a collection that represents Coretime regions. Also, deploys both the `xc-regions` and the `coretime-market` contracts.
+  
+5.  `--mintXcRegions`:
     
     -   Description: Mints a couple of mock xc-regions. Convenient for testing the market functionality.
 
-### Example: Testing contracts related stuff only:
+6.  `--contractsAccount <string>`:
+    
+    -   Description: When specified the program will transfer the mock xc-regions to this account.
 
-> NOTE: For the following to work, it is expected that the `astar-collator` node is running in the background in `--dev` mode at port `9920`. 
+7.  `--contractsPath <string>`:
+    
+    -   Description:  The path to the compiled contracts.
+
+### Example: Testing contracts-related stuff only:
+
+> NOTE: In this case, we don't need to run the zombienet network, instead it is expected that the `astar-collator` node is running in the background in `--dev` mode at port `9920`. 
 > 
 > Command for running the node:  `astar-collator --dev --rpc-port 9920`
 
