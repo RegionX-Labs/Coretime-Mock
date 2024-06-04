@@ -12,7 +12,7 @@ import-storage:
   Market:
     Listings: [
       [
-        [{ core: 0, begin: 8, mask: null }],
+        [{ core: 0, begin: 8, mask: "0xffffffffffffffffffff" }],
         {
           seller: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY,
           timeslice_price: 1000000,
