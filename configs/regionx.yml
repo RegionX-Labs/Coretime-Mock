@@ -1,0 +1,22 @@
+endpoint: ws://127.0.0.1:9920
+mock-signature-host: true
+db: ./db.sqlite
+
+import-storage:
+  System:
+    Account:
+      - - - 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+        - providers: 1
+          data:
+            free: 1000000000000000
+  Market:
+    Listings: [
+      [
+        [{ core: 0, begin: 8, mask: null }],
+        {
+          seller: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY,
+          timeslice_price: 1000000,
+          sale_recipient: 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY,
+        },
+      ]
+    ]
