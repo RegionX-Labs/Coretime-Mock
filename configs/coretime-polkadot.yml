@@ -1,0 +1,31 @@
+endpoint: wss://sys.ibp.network/coretime-kusama/
+mock-signature-host: true
+db: ./db.sqlite
+
+import-storage:
+  System:
+    Account:
+      - - - 5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt
+        - providers: 1
+          data:
+            free: 1000000000000000
+  Broker:
+     Regions:
+      [
+        [
+          [{ core: 32, begin: 316008, mask: "0xffffffffffffffffffff" }],
+          {
+            end: 321048,
+            owner: "5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt",
+            paid: null,
+          },
+        ],
+        [
+          [{ core: 34, begin: 316008, mask: "0xffffffffffffffffffff" }],
+          {
+            end: 321048,
+            owner: "5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt",
+            paid: null,
+          },
+        ],
+      ]
