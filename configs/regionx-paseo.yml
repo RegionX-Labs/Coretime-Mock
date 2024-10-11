@@ -1,0 +1,65 @@
+endpoint: wss://regionx-paseo.regionx.tech
+mock-signature-host: true
+db: ./db.sqlite
+
+import-storage:
+  System:
+    Account:
+      - - - 5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt
+        - providers: 1
+          data:
+            free: 1000000000000000
+      - - - 5F76zmFCUHBaSFoCecC54VCiZMpPWnRy4oPBrZpeLiuYRVCn
+        - providers: 1
+          data:
+            free: 1000000000000000
+  
+  Tokens:
+      Accounts:
+      -
+        -
+          - 5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt
+          - token: 1
+        - free: 1000000000000000
+      -
+        -
+          - 5F76zmFCUHBaSFoCecC54VCiZMpPWnRy4oPBrZpeLiuYRVCn 
+          - token: 1
+        - free: 1000000000000000
+
+  Regions:
+    Regions:
+      [
+        [
+          [{ core: 0, begin: 43509, mask: "0xffffffffffffffffffff" }],
+          {
+            owner: 5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt,
+            locked: false,
+            record:
+              {
+                Available:
+                  {
+                    end: 48549,
+                    owner: "5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt",
+                    paid: null,
+                  },
+              },
+          },
+        ],
+        [
+          [{ core: 1, begin: 43509, mask: "0xffffffffffffffffffff" }],
+          {
+            owner: 5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt,
+            locked: false,
+            record:
+              {
+                Available:
+                  {
+                    end: 48549,
+                    owner: "5G6chmxEnd3GKhwrEPCA35wuMGpE8PHu9QtcVsBE9U8B4avt",
+                    paid: null,
+                  },
+              },
+          },
+        ],
+      ]
